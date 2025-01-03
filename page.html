@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baixar Vídeos do YouTube</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 300px;
+        }
+        .container h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+        .container input, .container select {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .container button {
+            padding: 10px 20px;
+            background: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .container button:hover {
+            background: #0056b3;
+        }
+        .progress-bar {
+            width: 100%;
+            background: #f3f3f3;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar-inner {
+            height: 20px;
+            background: #007BFF;
+            width: 0;
+            transition: width 0.2s;
+        }
+        .status {
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Baixar Vídeos do YouTube</h1>
+        <input type="text" id="url" placeholder="Insira o link do vídeo...">
+        <select id="format">
+            <option value="">Selecione uma qualidade</option>
+        </select>
+        <button onclick="fetchFormats()">Carregar Qualidades</button>
+        <button onclick="startDownload()">Baixar</button>
+        <div class="progress-bar">
+            <div class="progress-bar-inner" id="progress-bar-inner"></div>
+        </div>
+        <div class="status" id="status">Aguardando...</div>
+    </div>
+
+    <script>
+        async function fetchFormats() {
+            const url = document.getElementById('url').value;
+            if (url.trim() === "") {
+                alert("Por favor, insira um link válido do YouTube.");
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/list_formats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                if (!response.ok) {
+                    alert("Erro ao listar formatos.");
+                    return;
+                }
+
+                const data = await response.json();
+                const formatSelect = document.getElementById('format');
+                formatSelect.innerHTML = '<option value="">Selecione uma qualidade</option>';
+                data.formats.forEach(format => {
+                    const option = document.createElement('option');
+                    option.value = format.format_id;
+                    option.textContent = `${format.resolution} (${format.ext})`;
+                    formatSelect.appendChild(option);
+                });
+            } catch (err) {
+                alert("Erro ao conectar ao servidor.");
+            }
+        }
+
+        async function startDownload() {
+            const url = document.getElementById('url').value;
+            const format = document.getElementById('format').value;
+
+            if (url.trim() === "" || format === "") {
+                alert("Por favor, insira um link válido e selecione uma qualidade.");
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url, format_id: format })
+                });
+
+                if (!response.ok) {
+                    alert("Erro ao realizar o download.");
+                    return;
+                }
+
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'video.mp4';
+                link.click();
+
+                updateStatus("Download concluído.");
+            } catch (err) {
+                alert("Erro ao conectar ao servidor.");
+            }
+        }
+
+        async function updateProgress() {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/download_progress');
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const progressBar = document.getElementById('progress-bar-inner');
+                const status = document.getElementById('status');
+
+                if (data.status === 'downloading') {
+                    progressBar.style.width = data.progress;
+                    status.textContent = `Progresso: ${data.progress}, ETA: ${data.eta}s`;
+                } else if (data.status === 'finished') {
+                    progressBar.style.width = '100%';
+                    status.textContent = "Download concluído.";
+                }
+            } catch (err) {
+                console.error("Erro ao atualizar progresso:", err);
+            }
+        }
+
+        function updateStatus(message) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+        }
+
+        setInterval(updateProgress, 1000);
+    </script>
+</body>
+</html>
