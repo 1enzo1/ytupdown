@@ -10,11 +10,13 @@
     <div class="container">
         <h1>Baixar Vídeos do YouTube</h1>
         <input type="text" id="url" placeholder="Insira o link do vídeo...">
-        <select id="format">
-            <option value="">Selecione uma qualidade</option>
-        </select>
         <button onclick="fetchFormats()">Carregar Qualidades</button>
-        <button onclick="startDownload()">Baixar</button>
+        <div id="quality-section" style="display: none;">
+            <select id="format">
+                <option value="">Selecione uma qualidade</option>
+            </select>
+            <button onclick="startDownload()">Baixar</button>
+        </div>
         <div class="progress-bar">
             <div class="progress-bar-inner" id="progress-bar-inner"></div>
         </div>
@@ -24,6 +26,7 @@
     <script>
         async function fetchFormats() {
             const url = document.getElementById('url').value;
+            const qualitySection = document.getElementById('quality-section');
             if (url.trim() === "") {
                 alert("Por favor, insira um link válido do YouTube.");
                 return;
@@ -52,6 +55,9 @@
                     option.textContent = `${format.resolution} (${format.ext})`;
                     formatSelect.appendChild(option);
                 });
+
+                qualitySection.style.display = 'block';
+
             } catch (err) {
                 alert("Erro ao conectar ao servidor.");
             }
@@ -102,23 +108,23 @@
                 const status = document.getElementById('status');
 
                 if (data.status === 'downloading') {
-                    progressBar.style.width = data.progress;
-                    status.textContent = `Progresso: ${data.progress}, ETA: ${data.eta}s`;
+                    const progress = parseFloat(data.progress.replace('%', '')) || 0;
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.textContent = `${progress.toFixed(1)}%`;
+                    status.textContent = `Progresso: ${progress.toFixed(1)}%, ETA: ${data.eta}s`;
                 } else if (data.status === 'finished') {
                     progressBar.style.width = '100%';
+                    progressBar.textContent = "100%";
                     status.textContent = "Download concluído.";
+                } else if (data.status === 'error') {
+                    status.textContent = "Erro durante o download.";
                 }
             } catch (err) {
                 console.error("Erro ao atualizar progresso:", err);
             }
         }
 
-        function updateStatus(message) {
-            const status = document.getElementById('status');
-            status.textContent = message;
-        }
-
-        setInterval(updateProgress, 1000);
+        setInterval(updateProgress, 1000); // Atualiza o progresso a cada segundo
     </script>
 </body>
 </html>

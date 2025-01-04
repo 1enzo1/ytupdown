@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file
 import os
 from yt_dlp import YoutubeDL
 from flask_cors import CORS
@@ -7,10 +7,11 @@ app = Flask(__name__)
 CORS(app)
 
 progress_data = {'status': 'idle', 'progress': 0.0, 'eta': ''}
+server_status = {'running': True, 'tasks': []}
 
 @app.route('/')
 def home():
-    return 'Servidor Flask funcionando!'
+    return render_template('index.html')
 
 @app.route('/list_formats', methods=['POST'])
 def list_formats():
@@ -55,12 +56,14 @@ def download_video():
     def progress_hook(d):
         if d['status'] == 'downloading':
             progress_data['status'] = 'downloading'
-            progress_data['progress'] = d['_percent_str'].strip()
+            progress_data['progress'] = d.get('_percent_str', '0%').strip()
             progress_data['eta'] = d.get('eta', 'Desconhecido')
+            server_status['tasks'].append(f"Baixando: {d['_percent_str'].strip()} ETA: {d.get('eta', 'Desconhecido')}s")
         elif d['status'] == 'finished':
             progress_data['status'] = 'finished'
             progress_data['progress'] = 100.0
             progress_data['eta'] = ''
+            server_status['tasks'].append("Download concluído.")
 
     try:
         options = {
@@ -80,8 +83,13 @@ def download_video():
         progress_data['status'] = 'error'
         progress_data['progress'] = 0.0
         progress_data['eta'] = ''
+        server_status['tasks'].append(f"Erro: {str(e)}")
         print(f"Erro ao processar o download: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/status', methods=['GET'])
+def server_status_view():
+    return jsonify(server_status)
 
 if __name__ == '__main__':
     os.makedirs('downloads', exist_ok=True)
