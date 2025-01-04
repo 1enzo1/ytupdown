@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Baixar Vídeos do YouTube</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
     <div class="container">
         <h1>Baixar Vídeos do YouTube</h1>
@@ -112,7 +114,7 @@
                 const response = await fetch('http://127.0.0.1:5000/download_progress');
                 if (!response.ok) {
                     console.warn("Falha ao conectar ao servidor para progresso.");
-                    return;
+                    return; // Não exibe alerta
                 }
 
                 const data = await response.json();
@@ -132,11 +134,15 @@
                     status.textContent = "Erro durante o download.";
                 }
             } catch (err) {
+                // Apenas registra no console, sem alerta
                 console.error("Erro ao atualizar progresso:", err);
             }
         }
 
+
         setInterval(updateProgress, 1000); // Atualiza o progresso a cada segundo
     </script>
+
 </body>
+
 </html>
