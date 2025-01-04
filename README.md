@@ -1,96 +1,46 @@
 # YouTube Video Downloader
 
-Este projeto permite listar formatos de vídeo disponíveis e baixar vídeos do YouTube em diferentes qualidades, exibindo uma barra de progresso em tempo real durante o download.
+Este projeto é uma aplicação simples para baixar vídeos do YouTube. Ele permite selecionar a qualidade do vídeo antes do download, utilizando o framework Flask no backend e uma interface web estilizada em dark mode.
 
-## Requisitos
+---
 
-Antes de começar, certifique-se de ter instalado os seguintes pacotes:
+## Guia Rápido para Leigos
 
-- Python 3.8 ou superior
-- `flask`
-- `flask-cors`
-- `yt-dlp`
+### Passos para usar o aplicativo:
 
-## Instalação
+1. **Abrir o terminal**:
+   - No Windows, use o Prompt de Comando (cmd) ou PowerShell.
+   - No Linux/Mac, use o Terminal.
 
-1. Clone o repositório:
-
+2. **Navegar até a pasta do projeto**:
+   Digite o comando para entrar na pasta onde você baixou o projeto:
    ```bash
-   git clone https://github.com/1enzo1/ytdown.git
-   cd ytdown
+   cd <pasta-do-projeto>
    ```
 
-2. Crie um ambiente virtual (opcional, mas recomendado):
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # No Windows: venv\Scripts\activate
-   ```
-
-3. Instale as dependências:
-
-   ```bash
-   pip install flask flask-cors yt-dlp
-   ```
-
-## Como usar
-
-1. Inicie o servidor Flask:
-
+3. **Executar o aplicativo**:
+   No terminal, execute:
    ```bash
    python app.py
    ```
+   Isso iniciará o servidor local.
 
-   O servidor estará disponível em: `http://127.0.0.1:5000`
+4. **Abrir o navegador**:
+   No navegador, acesse:
+   ```
+   http://127.0.0.1:5000
+   ```
 
-2. Acesse a interface HTML para listar os formatos e iniciar o download.
+5. **Usar a interface**:
+   - Insira o link de um vídeo do YouTube.
+   - Clique em "Carregar Qualidades".
+   - Escolha a qualidade e clique em "Baixar".
 
-## Endpoints
+### Observação
+- Os vídeos baixados serão salvos na pasta `downloads` dentro do projeto.
+- Certifique-se de que a URL do vídeo seja válida.
 
-### `/`
-
-- **Método**: `GET`
-- **Descrição**: Página inicial do servidor.
-
-### `/list_formats`
-
-- **Método**: `POST`
-- **Descrição**: Lista os formatos de vídeo disponíveis para um URL do YouTube.
-- **Parâmetros**:
-  - `url`: URL do vídeo do YouTube.
-
-- **Resposta**:
-  ```json
-  {
-    "formats": [
-      {"format_id": "22", "resolution": "720p", "ext": "mp4"},
-      {"format_id": "18", "resolution": "360p", "ext": "mp4"}
-    ]
-  }
-  ```
-
-### `/download`
-
-- **Método**: `POST`
-- **Descrição**: Faz o download de um vídeo na qualidade selecionada.
-- **Parâmetros**:
-  - `url`: URL do vídeo do YouTube.
-  - `format_id`: ID do formato do vídeo (obtido de `/list_formats`).
-
-- **Resposta**: Retorna o arquivo de vídeo para download.
-
-### `/download_progress`
-
-- **Método**: `GET`
-- **Descrição**: Retorna o progresso atual do download.
-- **Resposta**:
-  ```json
-  {
-    "status": "downloading",
-    "progress": "50.0%",
-    "eta": "30s"
-  }
-  ```
+---
 
 ## Estrutura do Projeto
 
@@ -100,17 +50,64 @@ Antes de começar, certifique-se de ter instalado os seguintes pacotes:
 ├── templates
 │   └── index.html       # Interface HTML
 ├── static
-│   └── styles.css       # Estilos (opcional)
+│   └── styles.css       # Estilos em dark mode
 ├── downloads            # Pasta onde os vídeos baixados são salvos
-└── README.md            # Este arquivo
+└── README.md            # Documentação do projeto
 ```
 
-## Observações
+---
 
-- Use esta ferramenta apenas para downloads legais e respeitando os termos de uso do YouTube.
-- Certifique-se de que possui permissão para baixar o conteúdo.
+## Pré-requisitos
+
+Certifique-se de ter o seguinte instalado em sua máquina:
+
+- **Python 3.8+**
+- **pip** (gerenciador de pacotes do Python)
+
+Além disso, instale as bibliotecas necessárias executando:
+```bash
+pip install flask flask-cors yt-dlp
+```
+
+---
+
+## Executando o Aplicativo
+
+1. **Clone o repositório ou baixe o código fonte**:
+   ```bash
+   git clone <link-do-repositorio>
+   cd <pasta-do-projeto>
+   ```
+
+2. **Inicie o servidor Flask**:
+   ```bash
+   python app.py
+   ```
+
+3. **Acesse o aplicativo no navegador**:
+   Abra o navegador e vá para:
+   ```
+   http://127.0.0.1:5000
+   ```
+
+4. **Baixando Vídeos**:
+   - Insira o link do vídeo no campo indicado.
+   - Clique em "Carregar Qualidades" para listar as opções de qualidade.
+   - Selecione a qualidade desejada e clique em "Baixar".
+
+---
+
+
+## Problemas Conhecidos
+- Alguns vídeos podem não estar disponíveis para download devido a restrições do YouTube.
+- Certifique-se de que a conexão com a internet esteja estável para evitar falhas no download.
+
+---
 
 ## Contribuições
+Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests no repositório.
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir uma issue ou enviar um pull request.
+---
 
+**Autor**: Enzo Luchetti
+**Licença**: MIT
