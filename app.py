@@ -97,3 +97,7 @@ if __name__ == '__main__':
     os.makedirs('downloads', exist_ok=True)
     print("Servidor iniciado em http://127.0.0.1:5000")
     app.run(debug=True)
+
+@app.route('/healthz')
+def health_check():
+    return "OK", 200
