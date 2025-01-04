@@ -24,6 +24,15 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const progressBar = document.getElementById('progress-bar-inner');
+            const status = document.getElementById('status');
+
+            progressBar.style.width = '0%';
+            progressBar.textContent = '';
+            status.textContent = 'Aguardando...';
+        });
+
         async function fetchFormats() {
             const url = document.getElementById('url').value;
             const qualitySection = document.getElementById('quality-section');
@@ -101,7 +110,10 @@
         async function updateProgress() {
             try {
                 const response = await fetch('http://127.0.0.1:5000/download_progress');
-                if (!response.ok) return;
+                if (!response.ok) {
+                    console.warn("Falha ao conectar ao servidor para progresso.");
+                    return;
+                }
 
                 const data = await response.json();
                 const progressBar = document.getElementById('progress-bar-inner');

@@ -11,6 +11,8 @@ server_status = {'running': True, 'tasks': []}
 
 @app.route('/')
 def home():
+    global progress_data
+    progress_data = {'status': 'idle', 'progress': 0.0, 'eta': ''}
     return render_template('index.html')
 
 @app.route('/list_formats', methods=['POST'])
@@ -56,7 +58,7 @@ def download_video():
     def progress_hook(d):
         if d['status'] == 'downloading':
             progress_data['status'] = 'downloading'
-            progress_data['progress'] = d.get('_percent_str', '0%').strip()
+            progress_data['progress'] = d['_percent_str'].strip()
             progress_data['eta'] = d.get('eta', 'Desconhecido')
             server_status['tasks'].append(f"Baixando: {d['_percent_str'].strip()} ETA: {d.get('eta', 'Desconhecido')}s")
         elif d['status'] == 'finished':
