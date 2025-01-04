@@ -1,97 +1,92 @@
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: Arial, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
     margin: 0;
     padding: 0;
-    background-color: #1c1e24; /* Cinza escuro */
-    color: #f5f5f7;
-    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+:root {
+    --primary-color: #0078D4; /* Azul */
+    --secondary-color: #2B2B2B; /* Cinza escuro */
+    --accent-color: #1F1F1F; /* Preto suave */
+    --background-color: #121212; /* Preto profundo */
+    --text-color: #E6E6E6; /* Cinza claro */
 }
 
 .container {
-    max-width: 800px;
-    margin: 50px auto;
-    padding: 20px;
-    background: #24262e; /* Cinza médio */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border-radius: 12px;
-}
-
-h1, h2, h3 {
-    color: #4a90e2; /* Azul */
     text-align: center;
-    font-weight: 600;
+    background-color: var(--secondary-color);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
 }
 
-code {
-    background: #2d3038; /* Cinza mais escuro */
-    padding: 4px 6px;
-    border-radius: 4px;
-    font-size: 90%;
-    color: #f5f5f7;
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
 }
 
-pre {
-    background: #2d3038; /* Cinza mais escuro */
+input[type="text"] {
+    width: calc(100% - 20px);
     padding: 10px;
-    border-radius: 6px;
-    overflow-x: auto;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--accent-color);
+    color: var(--text-color);
 }
 
 button {
-    background-color: #4a90e2; /* Azul */
-    color: #f5f5f7;
-    border: none;
-    border-radius: 12px;
     padding: 10px 20px;
-    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    font-size: 16px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #3a78c2; /* Azul mais escuro */
+    background-color: #005a9e; /* Versão mais escura da cor primária */
 }
 
-input, select {
+select {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
     border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    background: #2d3038; /* Cinza mais escuro */
-    color: #f5f5f7;
+    border-radius: 5px;
+    background-color: var(--accent-color);
+    color: var(--text-color);
 }
 
-input:focus, select:focus {
-    outline: none;
-    box-shadow: 0 0 5px #4a90e2; /* Azul */
-}
-
-.progress-bar {
-    background: #2d3038; /* Cinza mais escuro */
-    border-radius: 12px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-
-.progress-bar-inner {
-    background: #4a90e2; /* Azul */
+progress {
+    width: 100%;
     height: 20px;
-    width: 0;
-    transition: width 0.3s ease;
-    text-align: center;
-    line-height: 20px;
-    color: #f5f5f7;
-    font-size: 12px;
+    border-radius: 5px;
+    overflow: hidden;
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--accent-color);
+    margin-top: 10px;
 }
 
-.status {
-    font-size: 14px;
-    color: #a1a1b3;
-    text-align: center;
+progress::-webkit-progress-bar {
+    background-color: var(--accent-color);
 }
 
-#quality-section {
-    display: none; /* Inicialmente oculto */
+progress::-webkit-progress-value {
+    background-color: var(--primary-color);
+}
+
+progress::-moz-progress-bar {
+    background-color: var(--primary-color);
 }

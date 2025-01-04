@@ -1,148 +1,122 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Baixar Vídeos do YouTube</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-
 <body>
     <div class="container">
         <h1>Baixar Vídeos do YouTube</h1>
-        <input type="text" id="url" placeholder="Insira o link do vídeo...">
-        <button onclick="fetchFormats()">Carregar Qualidades</button>
-        <div id="quality-section" style="display: none;">
-            <select id="format">
-                <option value="">Selecione uma qualidade</option>
-            </select>
-            <button onclick="startDownload()">Baixar</button>
+        <form id="url-form">
+            <input type="text" id="video-url" placeholder="Insira o link do vídeo" required>
+            <button type="button" id="load-qualities">Carregar Qualidades</button>
+        </form>
+        <div id="quality-selector" style="display: none;">
+            <select id="quality-options"></select>
+            <button type="button" id="download-video">Baixar</button>
         </div>
-        <div class="progress-bar">
-            <div class="progress-bar-inner" id="progress-bar-inner"></div>
+        <div id="progress-container">
+            <progress id="progress-bar" value="0" max="100"></progress>
+            <p id="progress-text"></p>
         </div>
-        <div class="status" id="status">Aguardando...</div>
+        <div id="status"></div>
     </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const progressBar = document.getElementById('progress-bar-inner');
-            const status = document.getElementById('status');
+        const form = document.getElementById('url-form');
+        const videoUrlInput = document.getElementById('video-url');
+        const loadQualitiesButton = document.getElementById('load-qualities');
+        const qualitySelector = document.getElementById('quality-selector');
+        const qualityOptions = document.getElementById('quality-options');
+        const downloadButton = document.getElementById('download-video');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const statusDiv = document.getElementById('status');
 
-            progressBar.style.width = '0%';
-            progressBar.textContent = '';
-            status.textContent = 'Aguardando...';
-        });
+        let intervalId;
 
-        async function fetchFormats() {
-            const url = document.getElementById('url').value;
-            const qualitySection = document.getElementById('quality-section');
-            if (url.trim() === "") {
-                alert("Por favor, insira um link válido do YouTube.");
+        async function fetchQualities() {
+            const url = videoUrlInput.value.trim();
+            if (!url) {
+                alert('Por favor, insira um URL válido.');
                 return;
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/list_formats', {
+                const response = await fetch('/get_qualities', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url })
                 });
 
-                if (!response.ok) {
-                    alert("Erro ao listar formatos.");
-                    return;
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        alert('Nenhuma qualidade disponível.');
+                        return;
+                    }
+
+                    qualityOptions.innerHTML = '';
+                    data.forEach(quality => {
+                        const option = document.createElement('option');
+                        option.value = quality.format_id;
+                        option.textContent = `${quality.resolution} (${quality.ext})`;
+                        qualityOptions.appendChild(option);
+                    });
+
+                    qualitySelector.style.display = 'block';
+                    statusDiv.textContent = '';
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Erro ao carregar as qualidades. Verifique o link e tente novamente.');
                 }
-
-                const data = await response.json();
-                const formatSelect = document.getElementById('format');
-                formatSelect.innerHTML = '<option value="">Selecione uma qualidade</option>';
-                data.formats.forEach(format => {
-                    const option = document.createElement('option');
-                    option.value = format.format_id;
-                    option.textContent = `${format.resolution} (${format.ext})`;
-                    formatSelect.appendChild(option);
-                });
-
-                qualitySection.style.display = 'block';
-
-            } catch (err) {
-                alert("Erro ao conectar ao servidor.");
+            } catch (error) {
+                console.error('Erro na solicitação:', error);
+                alert('Erro ao tentar carregar as qualidades. Tente novamente.');
             }
         }
 
-        async function startDownload() {
-            const url = document.getElementById('url').value;
-            const format = document.getElementById('format').value;
+        async function downloadVideo() {
+            const url = videoUrlInput.value.trim();
+            const quality = qualityOptions.value;
 
-            if (url.trim() === "" || format === "") {
-                alert("Por favor, insira um link válido e selecione uma qualidade.");
+            if (!url || !quality) {
+                alert('Por favor, selecione uma qualidade para baixar.');
                 return;
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/download', {
+                const response = await fetch('/download', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ url, format_id: format })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, quality })
                 });
 
-                if (!response.ok) {
-                    alert("Erro ao realizar o download.");
-                    return;
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = 'video.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                    statusDiv.textContent = 'Download iniciado.';
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error || 'Erro ao iniciar o download.');
                 }
-
-                const blob = await response.blob();
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'video.mp4';
-                link.click();
-
-                updateStatus("Download concluído.");
-            } catch (err) {
-                alert("Erro ao conectar ao servidor.");
+            } catch (error) {
+                console.error('Erro na solicitação:', error);
+                alert('Erro ao tentar iniciar o download. Tente novamente.');
             }
         }
 
-        async function updateProgress() {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/download_progress');
-                if (!response.ok) {
-                    console.warn("Falha ao conectar ao servidor para progresso.");
-                    return; // Não exibe alerta
-                }
-
-                const data = await response.json();
-                const progressBar = document.getElementById('progress-bar-inner');
-                const status = document.getElementById('status');
-
-                if (data.status === 'downloading') {
-                    const progress = parseFloat(data.progress.replace('%', '')) || 0;
-                    progressBar.style.width = `${progress}%`;
-                    progressBar.textContent = `${progress.toFixed(1)}%`;
-                    status.textContent = `Progresso: ${progress.toFixed(1)}%, ETA: ${data.eta}s`;
-                } else if (data.status === 'finished') {
-                    progressBar.style.width = '100%';
-                    progressBar.textContent = "100%";
-                    status.textContent = "Download concluído.";
-                } else if (data.status === 'error') {
-                    status.textContent = "Erro durante o download.";
-                }
-            } catch (err) {
-                // Apenas registra no console, sem alerta
-                console.error("Erro ao atualizar progresso:", err);
-            }
-        }
-
-
-        setInterval(updateProgress, 1000); // Atualiza o progresso a cada segundo
+        loadQualitiesButton.addEventListener('click', fetchQualities);
+        downloadButton.addEventListener('click', downloadVideo);
     </script>
-
 </body>
-
 </html>

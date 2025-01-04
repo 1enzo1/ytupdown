@@ -1,103 +1,108 @@
 from flask import Flask, render_template, request, jsonify, send_file
-import os
-from yt_dlp import YoutubeDL
 from flask_cors import CORS
+import yt_dlp
+import logging
+
+# Configuração de logging
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 CORS(app)
 
-progress_data = {'status': 'idle', 'progress': 0.0, 'eta': ''}
-server_status = {'running': True, 'tasks': []}
+# In-memory progress tracking
+progress = {
+    "percentage": 0,
+    "status": ""
+}
+
+def update_progress(percent, status):
+    global progress
+    progress["percentage"] = percent
+    progress["status"] = status
+    logging.info(f"Progresso atualizado: {percent}% - Status: {status}")
 
 @app.route('/')
-def home():
-    global progress_data
-    progress_data = {'status': 'idle', 'progress': 0.0, 'eta': ''}
+def index():
+    logging.info("Rota / acessada")
     return render_template('index.html')
 
-@app.route('/list_formats', methods=['POST'])
-def list_formats():
-    url = request.json.get('url')
-    print(f"Recebido URL para listagem de formatos: {url}")
-    if not url:
-        print("Erro: URL não fornecida")
-        return jsonify({'error': 'URL não fornecida'}), 400
+@app.route('/get_progress', methods=['GET'])
+def get_progress():
+    logging.info(f"Progresso atual enviado: {progress}")
+    return jsonify(progress)
 
+@app.route('/get_qualities', methods=['POST'])
+def get_qualities():
     try:
-        options = {
-            'quiet': True
+        url = request.json.get('url')
+        if not url:
+            logging.warning("URL inválida recebida na rota /get_qualities")
+            return jsonify({"error": "URL inválida."}), 400
+
+        logging.info(f"Extraindo qualidades para URL: {url}")
+        ydl_opts = {
+            'quiet': True,
+            'simulate': True,
+            'noplaylist': True,
+            'forcejson': True
         }
-        with YoutubeDL(options) as ydl:
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            formats = [{
+
+        formats = info.get('formats', [])
+        qualities = [
+            {
                 'format_id': f['format_id'],
-                'resolution': f.get('format_note', 'Desconhecido'),
-                'ext': f['ext']
-            } for f in info.get('formats', []) if f.get('video_ext') != 'none']
+                'resolution': f.get('resolution', 'N/A'),
+                'ext': f['ext'],
+                'filesize': f.get('filesize', 'Desconhecido')
+            } for f in formats if f.get('format_id')
+        ]
 
-        print(f"Formatos disponíveis: {formats}")
-        return jsonify({'formats': formats})
-
+        logging.info(f"Qualidades extraídas com sucesso: {qualities}")
+        return jsonify(qualities)
     except Exception as e:
-        print(f"Erro ao listar formatos: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/download_progress', methods=['GET'])
-def download_progress():
-    return jsonify(progress_data)
+        logging.error(f"Erro ao carregar qualidades: {e}")
+        return jsonify({"error": f"Erro ao carregar qualidades: {str(e)}"}), 500
 
 @app.route('/download', methods=['POST'])
-def download_video():
-    url = request.json.get('url')
-    format_id = request.json.get('format_id', 'best')  # Obtém o ID do formato solicitado
-    print(f"Recebido URL: {url}, Formato: {format_id}")
-    if not url:
-        print("Erro: URL não fornecida")
-        return jsonify({'error': 'URL não fornecida'}), 400
-
-    def progress_hook(d):
-        if d['status'] == 'downloading':
-            progress_data['status'] = 'downloading'
-            progress_data['progress'] = d['_percent_str'].strip()
-            progress_data['eta'] = d.get('eta', 'Desconhecido')
-            server_status['tasks'].append(f"Baixando: {d['_percent_str'].strip()} ETA: {d.get('eta', 'Desconhecido')}s")
-        elif d['status'] == 'finished':
-            progress_data['status'] = 'finished'
-            progress_data['progress'] = 100.0
-            progress_data['eta'] = ''
-            server_status['tasks'].append("Download concluído.")
-
+def download():
     try:
-        options = {
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
-            'format': format_id,
-            'progress_hooks': [progress_hook]
-        }
-        with YoutubeDL(options) as ydl:
-            print("Iniciando o download...")
-            info = ydl.extract_info(url, download=True)
-            file_path = ydl.prepare_filename(info)
-            print(f"Download concluído: {file_path}")
+        data = request.json
+        url = data.get('url')
+        format_id = data.get('quality')
 
-        return send_file(file_path, as_attachment=True)
+        if not url or not format_id:
+            logging.warning("Dados insuficientes fornecidos para o download")
+            return jsonify({"error": "Dados insuficientes fornecidos."}), 400
+
+        logging.info(f"Iniciando download para URL: {url}, formato: {format_id}")
+        output_path = './downloads/%(title)s.%(ext)s'
+        ydl_opts = {
+            'format': format_id,
+            'outtmpl': output_path,
+            'progress_hooks': [
+                lambda d: update_progress(
+                    int(d.get('downloaded_bytes', 0) / d.get('total_bytes', 1) * 100),
+                    d['status']
+                )
+            ]
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
+
+        logging.info("Download concluído com sucesso")
+
+        # Enviar o arquivo como resposta
+        return send_file(filename, as_attachment=True)
 
     except Exception as e:
-        progress_data['status'] = 'error'
-        progress_data['progress'] = 0.0
-        progress_data['eta'] = ''
-        server_status['tasks'].append(f"Erro: {str(e)}")
-        print(f"Erro ao processar o download: {e}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/status', methods=['GET'])
-def server_status_view():
-    return jsonify(server_status)
+        logging.error(f"Erro ao realizar o download: {e}")
+        return jsonify({"error": f"Erro ao realizar o download: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    os.makedirs('downloads', exist_ok=True)
-    print("Servidor iniciado em http://127.0.0.1:5000")
-    app.run(debug=True)
-
-@app.route('/healthz')
-def health_check():
-    return "OK", 200
+    logging.info("Iniciando aplicação Flask")
+    app.run(debug=True, host='0.0.0.0')

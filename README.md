@@ -1,46 +1,6 @@
-# YouTube Video Downloader
+# Projeto YouTube Downloader
 
-Este projeto é uma aplicação simples para baixar vídeos do YouTube. Ele permite selecionar a qualidade do vídeo antes do download, utilizando o framework Flask no backend e uma interface web estilizada em dark mode.
-
----
-
-## Guia Rápido para Leigos
-
-### Passos para usar o aplicativo:
-
-1. **Abrir o terminal**:
-   - No Windows, use o Prompt de Comando (cmd) ou PowerShell.
-   - No Linux/Mac, use o Terminal.
-
-2. **Navegar até a pasta do projeto**:
-   Digite o comando para entrar na pasta onde você baixou o projeto:
-   ```bash
-   cd <pasta-do-projeto>
-   ```
-
-3. **Executar o aplicativo**:
-   No terminal, execute:
-   ```bash
-   python app.py
-   ```
-   Isso iniciará o servidor local.
-
-4. **Abrir o navegador**:
-   No navegador, acesse:
-   ```
-   http://127.0.0.1:5000
-   ```
-
-5. **Usar a interface**:
-   - Insira o link de um vídeo do YouTube.
-   - Clique em "Carregar Qualidades".
-   - Escolha a qualidade e clique em "Baixar".
-
-### Observação
-- Os vídeos baixados serão salvos na pasta `downloads` dentro do projeto.
-- Certifique-se de que a URL do vídeo seja válida.
-
----
+Este projeto permite realizar o download de vídeos do YouTube diretamente pelo navegador utilizando um servidor Flask.
 
 ## Estrutura do Projeto
 
@@ -50,64 +10,69 @@ Este projeto é uma aplicação simples para baixar vídeos do YouTube. Ele perm
 ├── templates
 │   └── index.html       # Interface HTML
 ├── static
-│   └── styles.css       # Estilos em dark mode
-├── downloads            # Pasta onde os vídeos baixados são salvos
-└── README.md            # Documentação do projeto
+│   └── styles.css       # Estilos
+├── downloads            # Pasta temporária para downloads locais
+├── README.md            # Este arquivo
+├── requirements.txt     # Dependências do projeto
+├── runtime.txt          # Versão do Python especificada
 ```
 
----
+## Instalação e Execução Local
 
-## Pré-requisitos
+### 1. Requisitos
+- Python 3.12
+- pip (gerenciador de pacotes do Python)
 
-Certifique-se de ter o seguinte instalado em sua máquina:
+### 2. Instale as Dependências
 
-- **Python 3.8+**
-- **pip** (gerenciador de pacotes do Python)
-
-Além disso, instale as bibliotecas necessárias executando:
 ```bash
-pip install flask flask-cors yt-dlp
+pip install -r requirements.txt
 ```
 
+### 3. Execute o Servidor Flask
+
+```bash
+python app.py
+```
+
+O servidor estará disponível em `http://127.0.0.1:5000`.
+
+## Deploy no Render
+
+### 1. Especifique a Versão do Python
+Crie o arquivo `runtime.txt` com o seguinte conteúdo:
+```
+python-3.12.0
+```
+
+### 2. Configure o Repositório no Render
+- Escolha **Web Services** ao criar o serviço.
+- No campo **Start Command**, insira:
+  ```bash
+  gunicorn app:app
+  ```
+- No campo **Build Command**, insira:
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+### 3. Configuração da Porta
+Certifique-se de que o Flask usa a porta definida pelo Render com o seguinte trecho no `app.py`:
+```python
+import os
+port = int(os.environ.get('PORT', 5000))
+app.run(host='0.0.0.0', port=port)
+```
+
+### 4. Upload do Arquivo para o Cliente
+O `app.py` já está configurado para enviar o vídeo diretamente para o cliente. Ele usa o método `send_file` para que o vídeo não seja armazenado permanentemente no servidor.
+
+## Testes Locais
+
+1. Insira o link do vídeo no campo de entrada.
+2. Escolha a qualidade desejada.
+3. Clique em **Baixar** e o arquivo será baixado diretamente para o seu dispositivo.
+
 ---
 
-## Executando o Aplicativo
-
-1. **Clone o repositório ou baixe o código fonte**:
-   ```bash
-   git clone <link-do-repositorio>
-   cd <pasta-do-projeto>
-   ```
-
-2. **Inicie o servidor Flask**:
-   ```bash
-   python app.py
-   ```
-
-3. **Acesse o aplicativo no navegador**:
-   Abra o navegador e vá para:
-   ```
-   http://127.0.0.1:5000
-   ```
-
-4. **Baixando Vídeos**:
-   - Insira o link do vídeo no campo indicado.
-   - Clique em "Carregar Qualidades" para listar as opções de qualidade.
-   - Selecione a qualidade desejada e clique em "Baixar".
-
----
-
-
-## Problemas Conhecidos
-- Alguns vídeos podem não estar disponíveis para download devido a restrições do YouTube.
-- Certifique-se de que a conexão com a internet esteja estável para evitar falhas no download.
-
----
-
-## Contribuições
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues ou pull requests no repositório.
-
----
-
-**Autor**: Enzo Luchetti
-**Licença**: MIT
+Se você tiver dúvidas ou encontrar problemas, sinta-se à vontade para abrir uma issue no repositório!
